@@ -8,27 +8,74 @@ const balls = [];
 let friction = 0.01;
 let current_ball_index = null;
 let is_mouse_down = false;
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = '500';
+canvas.height = '500';
+
+class Vector {
+    constructor(x,y){
+        this.x=x;
+        this.y=y;
+    }
+
+    add(v){
+        return new Vector(this.x+v.x, this.y+v.y)
+    }
+
+    substract(v){
+        return new Vector(this.x-v.x, this.y-v.y);
+    }
+
+    magnitude(){
+        return Math.sqrt(this.x**2 + this.y**2);
+    }
+
+    mult(n){
+        return new Vector(this.x*n, this.y*n);
+    }
+
+    unit(){
+        if (this.magnitude()===0) {
+            return new Vector(0,0);
+        } else {            
+            return new Vector(this.x/this.magnitude(), this.y/this.magnitude());
+        }
+    }
+
+    normal(){
+        return new Vector(-this.y, this.x).unit();
+    }
+
+    static dot(v1,v2){
+        return v1.x*v2.x + v1.y*v2.y;
+    }
+
+    drawVec(start_x, start_y, n, color){
+        ctx.beginPath();
+        ctx.moveTo(start_x, start_y);
+        ctx.lineTo(start_x + this.x*n, start_y + this.y*n);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.closePath()
+    }
+}
+
 class Ball{
     constructor(x, y, r){
-        this.x = x;
-        this.y = y;
+        this.pos = new Vector(x,y)
         this.r = r;
-        this.vel_x = 0;
-        this.vel_y = 0;
-        this.acc_x = 0;
-        this.acc_y = 0;
+        this.velocity = new Vector(0,0)
+        this.acc = new Vector(0,0)
         this.acceleration = 1;
         this.speed = 0;
         this.player = false;
         this.index=balls.length;
         balls.push(this);
+        console.log(this.index)
     }
 
     drawBall(){
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI);
+        ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
         ctx.strokeStyle = "black";
         ctx.stroke();
         ctx.fillStyle = "red";
@@ -38,82 +85,69 @@ class Ball{
 
     //displaying the current acceleration and the velocity of the ball
     display(){
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + this.acc_x*100, this.y + this.acc_y*100);
-        ctx.strokeStyle = "green";
-        ctx.stroke();
-        ctx.closePath();
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + this.vel_x*10, this.y + this.vel_y*10);
-        ctx.strokeStyle = "blue";
-        ctx.stroke();
-        ctx.closePath();
+        this.velocity.drawVec(this.pos.x, this.pos.y, 10, 'green')
+        this.acc.unit().drawVec(this.pos.x, this.pos.y, 10, 'blue')
+        this.acc.normal().drawVec(this.pos.x, this.pos.y, 10, 'black')
     }
 
     update(){
 
-
+        this.acc = this.acc.unit();
         //acceleration values added to the velocity components
-        this.vel_x += this.acc_x;
-        this.vel_y += this.acc_y;
+        this.velocity = this.velocity.add(this.acc);
         //velocity gets multiplied by a number between 0 and 1
-        this.vel_x *= 1-friction;
-        this.vel_y *= 1-friction;
+        this.velocity = this.velocity.mult(1-friction)
         //velocity values added to the current x, y position
     
+        this.pos = this.pos.add(this.velocity)
 
 
         //borders check
-        if ((this.x + this.r) > canvas.clientWidth){
-            this.vel_x = - this.vel_x;
-            this.x=  canvas.clientWidth - this.r -1;
+        
+        if ((this.pos.x + this.r) > canvas.clientWidth){
+            this.velocity.x = - this.velocity.x;
+            this.pos.x=  canvas.clientWidth - this.r -1;
         }
-        if ((this.y + this.r) > canvas.clientHeight){
-            this.vel_y = - this.vel_y;
-            this.y=  canvas.clientHeight - this.r -1;
+        if ((this.pos.y + this.r) > canvas.clientHeight){
+            this.velocity.y = - this.velocity.y;
+            this.pos.y=  canvas.clientHeight - this.r -1;
         }
-        if ((this.x - this.r) < 0){
-            this.vel_x = - this.vel_x;
-            this.x= this.r +1;
+        if ((this.pos.x - this.r) < 0){
+            this.velocity.x = - this.velocity.x;
+            this.pos.x= this.r +1;
         }
-        if ((this.y - this.r) < 0){
-            this.vel_y = - this.vel_y;
-            this.y= this.r + 1;
+        if ((this.pos.y - this.r) < 0){
+            this.velocity.y = - this.velocity.y;
+            this.pos.y= this.r + 1;
         }
-        this.x += this.vel_x;
-        this.y += this.vel_y;
         
         //friction
-        if (this.vel_x > 0) {
-            this.vel_x-=1;
-            if (this.vel_x < 0) {
-                this.vel_x = 0;
+        if (this.velocity.x > 0) {
+            this.velocity.x-=1;
+            if (this.velocity.x < 0) {
+                this.velocity.x = 0;
                 this.acc_x = 0;
             }
         } else {
-            this.vel_x+=1;
-            if (this.vel_x > 0) {
-                this.vel_x = 0;
+            this.velocity.x+=1;
+            if (this.velocity.x > 0) {
+                this.velocity.x = 0;
                 this.acc_x = 0;
             }
         }
-        if (this.vel_y > 0) {
-            this.vel_y-=1;
-            if (this.vel_y < 0) {
-                this.vel_y = 0;
+        if (this.velocity.y > 0) {
+            this.velocity.y-=1;
+            if (this.velocity.y < 0) {
+                this.velocity.y = 0;
                 this.acc_y = 0;
             }
         } else {
-            this.vel_y+=1;
-            if (this.vel_y > 0) {
-                this.vel_y = 0;
+            this.velocity.y+=1;
+            if (this.velocity.y > 0) {
+                this.velocity.y = 0;
                 this.acc_y = 0;
             }
         }
-        this.x += this.vel_x;
-        this.y += this.vel_y;
  
         this.drawBall();
         this.display();
@@ -126,7 +160,7 @@ let getDistance = (xpos1,ypos1,xpos2,ypos2) => {
 }
 
 let is_mouse_in_ball = (x,y,ball) =>{
-    if (getDistance(ball.x, ball.y, x,y) < ball.r) {
+    if (getDistance(ball.pos.x, ball.pos.y, x,y) < ball.r) {
         return true;
     } else {
         return false;
@@ -162,7 +196,6 @@ function getMousePos(canvas, e) {
   }
 
 let mouse_move = (e) => {
-    console.log('1')
     if (!is_mouse_down){
         return;
     } else {
@@ -172,26 +205,18 @@ let mouse_move = (e) => {
         let mouseY = mousePos.y;
         for (let b of balls){
             if (is_mouse_in_ball(mouseX, mouseY, b)){
-                if (b.x < mouseX){
-                    b.acc_x = -b.acceleration;
+                if (b.pos.x < mouseX){
+                    b.acc.x = -b.acceleration;
                 } else {
-                    b.acc_x = b.acceleration;
+                    b.acc.x = b.acceleration;
                 }
 
-                if (b.y < mouseY){
-                    b.acc_y = -b.acceleration;
+                if (b.pos.y < mouseY){
+                    b.acc.y = -b.acceleration;
                 } else {
-                    b.acc_y = b.acceleration;
+                    b.acc.y = b.acceleration;
                 }
-                //acceleration values added to the velocity components
-                b.vel_x += b.acc_x;
-                b.vel_y += b.acc_y;
-                //velocity gets multiplied by a number between 0 and 1
-                b.vel_x *= 1-friction;
-                b.vel_y *= 1-friction;
-                //velocity values added to the current x, y position
-                b.x += b.vel_x;
-                b.y += b.vel_y;
+                
             }
         }
         
@@ -205,19 +230,43 @@ let mouse_up = (e) => {
     is_mouse_down = false;
 }
 
+function coll_det(b1,b2){
+    if(b1.r + b2.r >= b2.pos.substract(b1.pos).magnitude()){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function pen_res(b1,b2){
+    let dist = b1.pos.substract(b2.pos);
+    let pen_depth = b1.r + b2.r - dist.magnitude();
+    let pen_res = dist.unit().mult(pen_depth/2);
+    b1.pos = b1.pos.add(pen_res);
+    b2.pos = b2.pos.add(pen_res.mult(-1));
+}
+
 function mainLoop() {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    balls.forEach((b) => {
+    balls.forEach((b, i) => {
         b.update();
+
+        for (let j = i+1; j < balls.length; j++){
+            if (coll_det(balls[i], balls[j])){
+                pen_res(balls[i],balls[j])
+            }
+        }
     });
+
+  
     requestAnimationFrame(mainLoop);
 }
 
 let Ball1 = new Ball(200, 200, 60);
 Ball1.player = true;
-// let Ball2 = new Ball(100, 100, 40);
- let Ball3 = new Ball(400, 150, 50);
-// let Ball4 = new Ball(200, 100, 60);
+let Ball2 = new Ball(100, 100, 40);
+let Ball3 = new Ball(400, 150, 50);
+let Ball4 = new Ball(200, 100, 60);
 canvas.onmousedown = mouse_down;
 canvas.onmouseup = mouse_up;
 canvas.onmousemove = mouse_move;
