@@ -1,15 +1,15 @@
 const canvas = document.getElementById('my_canvas');
 const ctx = canvas.getContext('2d');
 
-const BALLZ = [];
+const balls = [];
 
 
 //velocity gets multiplied by (1-friction)
 let friction = 0.01;
 let current_ball_index = null;
 let is_mouse_down = false;
-canvas.width = "640";
-canvas.height = "480";
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 class Ball{
     constructor(x, y, r){
         this.x = x;
@@ -20,9 +20,10 @@ class Ball{
         this.acc_x = 0;
         this.acc_y = 0;
         this.acceleration = 1;
+        this.speed = 0;
         this.player = false;
-        this.index=BALLZ.length;
-        BALLZ.push(this);
+        this.index=balls.length;
+        balls.push(this);
     }
 
     drawBall(){
@@ -52,44 +53,8 @@ class Ball{
     }
 
     update(){
-        if ((this.x + this.r) > canvas.width){
-            this.acc_x = - this.acc_x
-            this.x=  canvas.width - this.r -1
-        }
-        if ((this.y + this.r) > canvas.height){
-            this.acc_y = - this.acc_y
-            this.y=  canvas.height - this.r -1
-        }
-        if ((this.x - this.r) < 0){
-            this.acc_x = - this.acc_x
-            this.x= this.r +1
-        }
-        if ((this.y - this.r) < 0){
-            this.acc_y = - this.acc_y
-            this.y= this.r + 1
-        }
-        if (this.acc_x > 0) {
-            this.acc_x-=1
-            if (this.acc_x < 0) {
-                this.acc_x = 0;
-            }
-        } else {
-            this.acc_x+=1
-            if (this.acc_x > 0) {
-                this.acc_x = 0;
-            }
-        }
-        if (this.acc_y > 0) {
-            this.acc_y-=1
-            if (this.acc_y < 0) {
-                this.acc_y = 0;
-            }
-        } else {
-            this.acc_y+=1
-            if (this.acc_y > 0) {
-                this.acc_y = 0;
-            }
-        }
+
+
         //acceleration values added to the velocity components
         this.vel_x += this.acc_x;
         this.vel_y += this.acc_y;
@@ -98,8 +63,58 @@ class Ball{
         this.vel_y *= 1-friction;
         //velocity values added to the current x, y position
     
+
+
+        //borders check
+        if ((this.x + this.r) > canvas.clientWidth){
+            this.vel_x = - this.vel_x;
+            this.x=  canvas.clientWidth - this.r -1;
+        }
+        if ((this.y + this.r) > canvas.clientHeight){
+            this.vel_y = - this.vel_y;
+            this.y=  canvas.clientHeight - this.r -1;
+        }
+        if ((this.x - this.r) < 0){
+            this.vel_x = - this.vel_x;
+            this.x= this.r +1;
+        }
+        if ((this.y - this.r) < 0){
+            this.vel_y = - this.vel_y;
+            this.y= this.r + 1;
+        }
         this.x += this.vel_x;
         this.y += this.vel_y;
+        
+        //friction
+        if (this.vel_x > 0) {
+            this.vel_x-=1;
+            if (this.vel_x < 0) {
+                this.vel_x = 0;
+                this.acc_x = 0;
+            }
+        } else {
+            this.vel_x+=1;
+            if (this.vel_x > 0) {
+                this.vel_x = 0;
+                this.acc_x = 0;
+            }
+        }
+        if (this.vel_y > 0) {
+            this.vel_y-=1;
+            if (this.vel_y < 0) {
+                this.vel_y = 0;
+                this.acc_y = 0;
+            }
+        } else {
+            this.vel_y+=1;
+            if (this.vel_y > 0) {
+                this.vel_y = 0;
+                this.acc_y = 0;
+            }
+        }
+        this.x += this.vel_x;
+        this.y += this.vel_y;
+ 
         this.drawBall();
         this.display();
     }
@@ -118,15 +133,16 @@ let is_mouse_in_ball = (x,y,ball) =>{
     }
 }
 
-let mouse_down = (event) => {
-    event.preventDefault();
+let mouse_down = (e) => {
+    e.preventDefault();
     is_mouse_down = true;
-    startX = event.clientX
-    startY = event.clientY
+    var mousePos = getMousePos(canvas, e);
+    let mouseX = mousePos.x;
+    let mouseY = mousePos.y;
     let index = 0;
 
-    for (let ball of BALLZ){
-        if (is_mouse_in_ball(startX, startY, ball)) {
+    for (let ball of balls){
+        if (is_mouse_in_ball(mouseX, mouseY, ball)) {
             current_ball_index = ball.index
             console.log("In Ball", current_ball_index)
             return;
@@ -137,14 +153,24 @@ let mouse_down = (event) => {
     }
 }
 
+function getMousePos(canvas, e) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
 let mouse_move = (e) => {
+    console.log('1')
     if (!is_mouse_down){
         return;
     } else {
         e.preventDefault();
-        let mouseX = e.clientX 
-        let mouseY = e.clientY
-        for (let b of BALLZ){
+        var mousePos = getMousePos(canvas, e);
+        let mouseX = mousePos.x;
+        let mouseY = mousePos.y;
+        for (let b of balls){
             if (is_mouse_in_ball(mouseX, mouseY, b)){
                 if (b.x < mouseX){
                     b.acc_x = -b.acceleration;
@@ -157,7 +183,6 @@ let mouse_move = (e) => {
                 } else {
                     b.acc_y = b.acceleration;
                 }
-
                 //acceleration values added to the velocity components
                 b.vel_x += b.acc_x;
                 b.vel_y += b.acc_y;
@@ -182,19 +207,19 @@ let mouse_up = (e) => {
 
 function mainLoop() {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    BALLZ.forEach((b) => {
+    balls.forEach((b) => {
         b.update();
     });
     requestAnimationFrame(mainLoop);
 }
 
-let Ball1 = new Ball(200, 200, 30);
+let Ball1 = new Ball(200, 200, 60);
 Ball1.player = true;
-let Ball2 = new Ball(100, 100, 40);
-let Ball3 = new Ball(100, 150, 20);
-let Ball4 = new Ball(200, 100, 60);
+// let Ball2 = new Ball(100, 100, 40);
+ let Ball3 = new Ball(400, 150, 50);
+// let Ball4 = new Ball(200, 100, 60);
 canvas.onmousedown = mouse_down;
-canvas.onmouseup= mouse_up;
+canvas.onmouseup = mouse_up;
 canvas.onmousemove = mouse_move;
 
 requestAnimationFrame(mainLoop);
