@@ -41,8 +41,6 @@ function Canvas() {
         let friction = 0.05;
         let is_mouse_down = false;
 
-        let current_ball_index = null;
-
         class Vector{
             constructor(x, y){
                 this.x = x;
@@ -334,10 +332,10 @@ function Canvas() {
         }
 
         //walls along the canvas edges
-        let edge1 = new Wall(0, 0, canvas.clientWidth, 0);
-        let edge2 = new Wall(canvas.clientWidth, 0, canvas.clientWidth, canvas.clientHeight);
-        let edge3 = new Wall(canvas.clientWidth, canvas.clientHeight, 0, canvas.clientHeight);
-        let edge4 = new Wall(0, canvas.clientHeight, 0, 0);
+        new Wall(0, 0, canvas.clientWidth, 0);
+        new Wall(canvas.clientWidth, 0, canvas.clientWidth, canvas.clientHeight);
+        new Wall(canvas.clientWidth, canvas.clientHeight, 0, canvas.clientHeight);
+        new Wall(0, canvas.clientHeight, 0, 0);
 
         canvas.onmousedown = mouse_down;
         canvas.onmouseup = mouse_up;
