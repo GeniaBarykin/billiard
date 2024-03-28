@@ -328,7 +328,7 @@ function Canvas() {
             requestAnimationFrame(mainLoop);
         }
 
-        for (let i = 0; i < 10; i++){
+        for (let i = 0; i < 5; i++){
             let newBall = new Ball(randInt(100,500), randInt(50,400), randInt(20,40), randInt(0,10));
             newBall.elasticity = randInt(0,10) / 10;
         }
