@@ -6,8 +6,9 @@ function App() {
   const text = "Hello world 2";
   return (
     <div className="App">
-      Нажмите мышкой вне шара, чтобы толкать.
+      Водите нажатой мышкой вне шара, чтобы толкать.
       <Canvas id="canvas" />
+      Нажмите на шар, чтобы ввести цвет.
     </div>
   );
 }
