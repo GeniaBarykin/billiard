@@ -170,8 +170,7 @@ function Canvas() {
             let mouseY = mousePos.y;
 
             for (let ball of balls){
-                if (is_mouse_in_ball(mouseX, mouseY, ball)) {
-                    current_ball_index = ball.index                   
+                if (is_mouse_in_ball(mouseX, mouseY, ball)) {              
                     setShowMenu(true);
                     parentToChild({id: ball.index, color: ball.color});
                     return;
